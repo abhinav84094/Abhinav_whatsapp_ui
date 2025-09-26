@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // Show thinking message
   const thinkingMsg = document.createElement('div');
   thinkingMsg.classList.add('message', 'gpt');
-  thinkingMsg.textContent = "⏳ Thinking...";
+  thinkingMsg.textContent = "⏳ typing...";
   chatContainer.appendChild(thinkingMsg);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 

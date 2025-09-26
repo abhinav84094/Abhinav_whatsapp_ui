@@ -32,7 +32,7 @@ window.addEventListener("DOMContentLoaded", () => {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
   try {
-    const res = await fetch("http://localhost:3000/chat", {
+    const res = await fetch("https://llm-girlfriend.onrender.com/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -45,7 +45,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     thinkingMsg.remove(); // remove "Thinking..."
 
-    const gptText = `${data.text}"`;
+    const gptText = `${data.text}`;
     appendMessage(gptText, 'gpt');
   } catch (err) {
     thinkingMsg.remove(); // remove "Thinking..."

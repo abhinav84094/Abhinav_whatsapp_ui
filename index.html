@@ -1,27 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gemini GPT UI</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Full Screen WhatsApp Style Chat</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body, html { width: 100%; height: 100%; background: #e5ddd5; }
+    .chat-container { display: flex; flex-direction: column; height: 100%; max-width: 100%; }
+    .chat-header { background-color: #075E54; color: #fff; padding: 10px 15px; font-size: 18px; font-weight: bold; display: flex; align-items: center; }
+    .chat-header img { width: 36px; height: 36px; border-radius: 50%; margin-right: 10px; object-fit: cover; border: 2px solid #fff; }
+    .chat-messages { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .message { max-width: 70%; padding: 10px 14px; border-radius: 7px; position: relative; word-wrap: break-word; font-size: 14px; line-height: 18px; }
+    .message.sent { background-color: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; }
+    .message.received { background-color: #fff; align-self: flex-start; border-bottom-left-radius: 0; }
+    .message.offline { background-color: #f0f0f0; color: gray; }
+    .message.typing { background-color: #fff; color: #555; font-style: italic; display: flex; align-items: center; gap: 3px; }
+    .dot { width: 6px; height: 6px; background-color: #555; border-radius: 50%; animation: blink 1.4s infinite both; }
+    .dot:nth-child(1) { animation-delay: 0s; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0; }
+      40% { opacity: 1; }
+    }
+    .message .time { font-size: 10px; color: gray; position: absolute; bottom: 2px; right: 6px; }
+    .chat-input { display: flex; padding: 10px; background: #f0f2f5; }
+    .chat-input input { flex: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 14px; }
+    .chat-input button { margin-left: 10px; padding: 0 16px; border-radius: 50%; border: none; background: #075E54; color: white; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+    .chat-messages::-webkit-scrollbar { width: 6px; }
+    .chat-messages::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 3px; }
+    @media (max-width: 768px) {
+      .chat-header { font-size: 16px; padding: 8px 12px; }
+      .message { font-size: 13px; padding: 8px 12px; }
+      .chat-input input { font-size: 13px; }
+      .chat-header img { width: 30px; height: 30px; }
+    }
+    .message.sent {
+  background-color: #dcf8c6;
+  align-self: flex-end;
+  border-bottom-right-radius: 0;
+  padding-right: 32px; /* space for time */
+}
+
+.message.received {
+  background-color: #fff;
+  align-self: flex-start;
+  border-bottom-left-radius: 0;
+  padding-right: 32px; /* space for time */
+}
+
+
+  </style>
 </head>
 <body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <img src="abhinav-dp.jpg" alt="Profile Icon" id="profileIcon">
+      Abhinav Prakash
+    </div>
+    <div class="chat-messages" id="messages"></div>
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button onclick="sendMessage()">&#9658;</button>
+    </div>
+  </div>
 
-<header>
-  Shivani
-  <button id="toggle-mode">🌙 Dark Mode</button>
-</header>
+  <script>
+    const messagesContainer = document.getElementById('messages');
+    const input = document.getElementById('messageInput');
 
-<div id="chat-container">
-  <div class="message gpt">Hello Babu</div>
-</div>
+    function formatTime(date) {
+      let hours = date.getHours();
+      let minutes = date.getMinutes();
+      hours = hours < 10 ? '0' + hours : hours;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      return `${hours}:${minutes}`;
+    }
 
-<div id="input-area">
-  <input id="input" type="text" placeholder="Type your message..."/>
-  <button id="send-btn">Send</button>
-</div>
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
 
-<script src="script.js"></script>
+      // Add user's message
+      const userMessage = document.createElement('div');
+      userMessage.classList.add('message', 'sent');
+      userMessage.innerHTML = `${text}<span class="time">${formatTime(new Date())}</span>`;
+      messagesContainer.appendChild(userMessage);
+      input.value = '';
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      // Add animated typing indicator
+      const typingMessage = document.createElement('div');
+      typingMessage.classList.add('message', 'received', 'typing');
+      typingMessage.innerHTML = `
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      `;
+      messagesContainer.appendChild(typingMessage);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      try {
+        // Call backend
+        const response = await fetch("http://localhost:3000/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await response.json();
+        const botText = data.text || "offline";
+
+        // Remove typing indicator
+        typingMessage.remove();
+
+        // Add bot message
+        const botMessage = document.createElement('div');
+        botMessage.classList.add('message', 'received');
+        if(botText === "offline") botMessage.classList.add('offline');
+        botMessage.innerHTML = `${botText}<span class="time">${formatTime(new Date())}</span>`;
+        messagesContainer.appendChild(botMessage);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      } catch (err) {
+        console.error(err);
+        typingMessage.remove();
+        const offlineMessage = document.createElement('div');
+        offlineMessage.classList.add('message', 'received', 'offline');
+        offlineMessage.innerHTML = `offline<span class="time">${formatTime(new Date())}</span>`;
+        messagesContainer.appendChild(offlineMessage);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }
+
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
 </body>
 </html>
